@@ -15,9 +15,23 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y openfortivpn
 
+      - name: Create VPN Config File
+        run: |
+          cat > /tmp/openfortivpn.conf <<EOF
+          host = ${{ secrets.VPN_HOST }}
+          port = ${{ secrets.VPN_PORT }}
+          username = ${{ secrets.VPN_USER_NAME }}
+          password = ${{ secrets.VPN_PASSWORD }}
+          set-route = 1
+          set-dns = 0
+          EOF
+          sudo chmod 600 /tmp/openfortivpn.conf
+
       - name: Connect to VPN
         run: |
-          sudo openfortivpn ${{ secrets.VPN_HOST }}:${{ secrets.VPN_PORT }} -u "${{ secrets.VPN_USER_NAME }}" --password="${{ secrets.VPN_PASSWORD }}"
+          sudo openfortivpn -c /tmp/openfortivpn.conf > /tmp/vpn.log 2>&1 &
+          echo $! > /tmp/vpn.pid
+          sleep 10
 
       - name: Test VPN Connection
         run: |
