@@ -46,7 +46,7 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           port: 22
           script: |
-            cd E:\read-out-main
+            cd E:\internal-tool\read-out
             git pull origin main
             npm ci
             npm run build
