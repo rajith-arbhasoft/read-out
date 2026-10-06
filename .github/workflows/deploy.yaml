@@ -33,10 +33,11 @@ jobs:
           echo $! > /tmp/vpn.pid
           sleep 10
 
-      # - name: Test VPN Connection
-      #   run: |
-      #     sleep 10
-      #     nc -zv ${{ secrets.SERVER_HOST }} 22
+      - name: Test VPN Connection
+        run: |
+          sleep 10
+          ping -c 4 ${{ secrets.SERVER_HOST }}
+          nc -zv ${{ secrets.SERVER_HOST }} 22
           
       - name: Deploy
         uses: appleboy/ssh-action@master
