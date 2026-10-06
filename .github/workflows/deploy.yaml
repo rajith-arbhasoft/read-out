@@ -33,6 +33,9 @@ jobs:
           echo $! > /tmp/vpn.pid
           sleep 10
 
+          echo "===== VPN LOG ====="
+          sudo cat /tmp/vpn.log
+
       - name: Test VPN Connection
         run: |
           sleep 10
