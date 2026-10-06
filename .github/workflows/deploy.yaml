@@ -1,0 +1,39 @@
+name: Deploy sql tool 
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy: 
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Install Vpn Client
+        run: |
+          sudo apt-get update
+          apt-get install -y openfortivpn
+
+      - name: Connect to VPN
+        run: |
+          sudo openfortivpn ${{ secrets.VPN_HOST }}:${{ secrets.VPN_PORT }} -u "${{ secrets.VPN_USER_NAME }}" --password="${{ secrets.VPN_PASSWORD }}"
+
+      - name: Test VPN Connection
+        run: |
+          sleep 10
+          nc -zv ${{ secrets.SERVER_HOST }} 22
+          
+      - name: Deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: 22
+          script: |
+            cd E:\read-out-main
+            git pull origin main
+            npm ci
+            npm run build
+            npm run start
