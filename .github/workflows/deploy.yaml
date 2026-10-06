@@ -22,8 +22,6 @@ jobs:
           port = ${{ secrets.VPN_PORT }}
           username = ${{ secrets.VPN_USER_NAME }}
           password = ${{ secrets.VPN_PASSWORD }}
-          set-route = 1
-          set-dns = 0
           EOF
           sudo chmod 600 /tmp/openfortivpn.conf
 
