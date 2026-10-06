@@ -19,7 +19,7 @@ jobs:
         run: |
           cat > /tmp/openfortivpn.conf <<EOF
           host = ${{ secrets.VPN_HOST }}
-          port = ${{ secrets.VPN_PORT }}
+          port = ${{ secrets.VPN_HOST_PORT }}
           username = ${{ secrets.VPN_USER_NAME }}
           password = ${{ secrets.VPN_PASSWORD }}
           EOF
