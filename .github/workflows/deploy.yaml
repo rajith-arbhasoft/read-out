@@ -31,6 +31,9 @@ jobs:
           sudo openfortivpn -c /tmp/openfortivpn.conf > /tmp/vpn.log 2>&1 &
           echo $! > /tmp/vpn.pid
           sleep 10
+          
+          echo "===== VPN LOG ====="
+          sudo cat /tmp/vpn.log
 
       - name: Test VPN Connection
         run: |
