@@ -18,13 +18,13 @@ jobs:
       - name: Create VPN Config File
         run: |
           cat > /tmp/openfortivpn.conf <<EOF
-          host = ${{ secrets.VPN_HOST }}
-          port = ${{ secrets.VPN_HOST_PORT }}
-          username = ${{ secrets.VPN_USER_NAME }}
-          password = ${{ secrets.VPN_PASSWORD }}
-          trusted-cert = ${{ secrets.VPN_TRUSTED_CERT }}
-          set-routes = 1
-          set-dns = 0
+          host =${{ secrets.VPN_HOST }}
+          port =${{ secrets.VPN_HOST_PORT }}
+          username =${{ secrets.VPN_USER_NAME }}
+          password =${{ secrets.VPN_PASSWORD }}
+          trusted-cert =${{ secrets.VPN_TRUSTED_CERT }}
+          set-routes =1
+          set-dns =0
           EOF
           sudo chmod 600 /tmp/openfortivpn.conf
 
