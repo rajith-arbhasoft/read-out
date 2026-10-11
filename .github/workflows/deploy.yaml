@@ -57,4 +57,4 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           port: 22
           capture_stdout: true
-          script: echo START_TEST && whoami && hostname && echo END_TEST
+          script: cd /d E:\internal-tool\read-out && git status && git pull origin main && npm ci && npm run build
