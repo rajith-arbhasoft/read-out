@@ -60,3 +60,4 @@ jobs:
           script: |
             echo SSH_COMMAND_EXECUTED
             whoami
+            echo "SSH_COMMAND_EXECUTED"
