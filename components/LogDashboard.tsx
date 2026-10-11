@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { EnvironmentSelector } from "@/components/EnvironmentSelector";
+import { Logo } from "@/components/Logo";
 import type {
   ErrorGroup,
   LogBucket,
@@ -284,7 +285,10 @@ export function LogDashboard() {
   if (!catalog.logDashboard) {
     return (
       <main className="mx-auto max-w-xl p-6">
-        <h1 className="text-base font-semibold">Log dashboard</h1>
+        <div className="flex items-center gap-3">
+          <Logo />
+          <h1 className="text-base font-semibold">Log dashboard</h1>
+        </div>
         <p className="mt-2 text-sm text-muted">
           The log dashboard is turned off. Set SQL_TOOL_ENABLE_LOG_DASHBOARD=true and restart to read logs from the
           selected database.
@@ -301,7 +305,9 @@ export function LogDashboard() {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3">
-        <div>
+        <div className="flex items-center gap-3">
+          <Logo />
+          <div>
           <div className="flex items-center gap-4">
             <h1 className="text-base font-semibold tracking-tight">Log dashboard</h1>
             <a href="/" className="text-sm text-accent hover:underline">
@@ -309,6 +315,7 @@ export function LogDashboard() {
             </a>
           </div>
           <p className="text-xs text-muted">Reads log.logs on the selected environment database</p>
+          </div>
         </div>
         {catalog.environments.length === 0 ? (
           <p className="text-sm text-muted">No database is configured.</p>

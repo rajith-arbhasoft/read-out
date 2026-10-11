@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { EnvironmentSelector } from "@/components/EnvironmentSelector";
+import { Logo } from "@/components/Logo";
 import { QueryHistory } from "@/components/QueryHistory";
 import { QueryResults } from "@/components/QueryResults";
 import { SavedQueries } from "@/components/SavedQueries";
@@ -113,6 +114,36 @@ export function SqlConsole() {
     setError(null);
   }
 
+  async function updateSavedQuery(query: SavedQuery) {
+    if (!environment) {
+      setError("Choose an environment.");
+      return;
+    }
+    if (!sql.trim()) {
+      setError("Enter a SQL query before updating a saved query.");
+      return;
+    }
+    if (!window.confirm(`Update “${query.title}” with the SQL currently in the editor?`)) return;
+    setError(null);
+    const response = await fetch(`/api/saved-queries/${query.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: query.title,
+        description: query.description,
+        environment,
+        query: sql,
+      }),
+    });
+    const payload = (await response.json().catch(() => ({}))) as { error?: string; id?: string };
+    if (!response.ok) {
+      setError(payload.error ?? "The saved query could not be updated.");
+      return;
+    }
+    setActiveSavedId(query.id);
+    await loadSaved();
+  }
+
   async function removeSavedQuery(query: SavedQuery) {
     if (!window.confirm(`Delete saved query “${query.title}”?`)) return;
     const response = await fetch(`/api/saved-queries/${query.id}`, { method: "DELETE" });
@@ -130,7 +161,9 @@ export function SqlConsole() {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3">
-        <div>
+        <div className="flex items-center gap-3">
+          <Logo />
+          <div>
           <div className="flex items-center gap-4">
             <h1 className="text-base font-semibold tracking-tight">SQL Tool</h1>
             {catalog.logDashboard ? (
@@ -140,6 +173,7 @@ export function SqlConsole() {
             ) : null}
           </div>
           <p className="text-xs text-muted">Read-only queries against configured databases</p>
+          </div>
         </div>
         <EnvironmentSelector
           environments={catalog.environments}
@@ -172,6 +206,7 @@ export function SqlConsole() {
                   loadSavedQuery(query);
                   requestExecute(query.environment, query.query);
                 }}
+                onUpdate={(query) => void updateSavedQuery(query)}
                 onDelete={(query) => void removeSavedQuery(query)}
               />
             ) : (

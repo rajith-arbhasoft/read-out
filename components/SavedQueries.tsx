@@ -7,10 +7,11 @@ type SavedQueriesProps = {
   activeId: string | null;
   onLoad: (query: SavedQuery) => void;
   onRun: (query: SavedQuery) => void;
+  onUpdate: (query: SavedQuery) => void;
   onDelete: (query: SavedQuery) => void;
 };
 
-export function SavedQueries({ queries, activeId, onLoad, onRun, onDelete }: SavedQueriesProps) {
+export function SavedQueries({ queries, activeId, onLoad, onRun, onUpdate, onDelete }: SavedQueriesProps) {
   if (queries.length === 0) {
     return <p className="px-1 text-sm text-muted">No saved queries yet.</p>;
   }
@@ -37,6 +38,9 @@ export function SavedQueries({ queries, activeId, onLoad, onRun, onDelete }: Sav
             </button>
             <button type="button" className="text-xs text-muted hover:text-ink hover:underline" onClick={() => onLoad(query)}>
               Load
+            </button>
+            <button type="button" className="text-xs text-accent hover:underline" onClick={() => onUpdate(query)}>
+              Update
             </button>
             <button type="button" className="text-xs text-danger hover:underline" onClick={() => onDelete(query)}>
               Delete
