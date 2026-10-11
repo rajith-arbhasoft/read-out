@@ -31,4 +31,5 @@ export type EnvironmentCatalog = {
   environments: string[];
   confirmEnvironments: string[];
   maxRows: number;
+  logDashboard: boolean;
 };

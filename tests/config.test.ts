@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { environmentCatalog, getConnectionString, poolSettings } from "../lib/config/environments";
+import {
+  environmentCatalog,
+  getConnectionString,
+  logDashboardEnabled,
+  poolSettings,
+} from "../lib/config/environments";
 
 const SECRET = "postgresql://sql_tool_reader:sql-tool-test-secret@10.99.88.77:5432/application_dev";
 
@@ -76,6 +81,19 @@ describe("environment configuration", () => {
     withEnv({ DATABASE_PROD: SECRET, SQL_TOOL_CONFIRM_ENVIRONMENTS: undefined }, () => {
       const catalog = environmentCatalog();
       assert.equal(catalog.confirmEnvironments.includes("PROD"), true);
+    });
+  });
+
+  it("keeps the log dashboard off unless enabled", () => {
+    withEnv({ SQL_TOOL_ENABLE_LOG_DASHBOARD: undefined }, () => {
+      assert.equal(logDashboardEnabled(), false);
+      assert.equal(environmentCatalog().logDashboard, false);
+    });
+    withEnv({ SQL_TOOL_ENABLE_LOG_DASHBOARD: "true" }, () => {
+      assert.equal(logDashboardEnabled(), true);
+    });
+    withEnv({ SQL_TOOL_ENABLE_LOG_DASHBOARD: "yes" }, () => {
+      assert.equal(logDashboardEnabled(), true);
     });
   });
 });

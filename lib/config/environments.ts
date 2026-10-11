@@ -92,12 +92,18 @@ export function poolSettings(environment: string): PoolSettings {
   };
 }
 
+export function logDashboardEnabled(): boolean {
+  const raw = process.env.SQL_TOOL_ENABLE_LOG_DASHBOARD?.trim().toLowerCase();
+  return raw === "1" || raw === "true" || raw === "yes";
+}
+
 export function environmentCatalog(): EnvironmentCatalog {
   const environments = listEnvironments();
   return {
     environments,
     confirmEnvironments: confirmEnvironmentNames(environments),
     maxRows: poolSettings(environments[0] ?? "DEV").maxRows,
+    logDashboard: logDashboardEnabled(),
   };
 }
 

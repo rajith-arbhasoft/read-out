@@ -110,7 +110,7 @@ function normalizeValue(value: unknown): unknown {
   return value;
 }
 
-function mapDatabaseError(error: unknown, environment: string): Error {
+export function mapDatabaseError(error: unknown, environment: string): Error {
   if (
     error instanceof QueryTimeoutError ||
     error instanceof ResultLimitError ||
@@ -141,4 +141,21 @@ function mapDatabaseError(error: unknown, environment: string): Error {
     return new DatabaseSqlError(safe);
   }
   return new UnexpectedQueryError();
+}
+
+export async function queryReadOnly(
+  environment: string,
+  text: string,
+  values: unknown[] = [],
+): Promise<Record<string, unknown>[]> {
+  try {
+    return await withClient(environment, async (client) => {
+      await client.query("BEGIN READ ONLY");
+      const result = await client.query(text, values);
+      await client.query("COMMIT");
+      return result.rows as Record<string, unknown>[];
+    });
+  } catch (error) {
+    throw mapDatabaseError(error, environment);
+  }
 }

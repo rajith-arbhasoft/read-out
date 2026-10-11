@@ -15,6 +15,7 @@ export function SqlConsole() {
     environments: [],
     confirmEnvironments: [],
     maxRows: 10000,
+    logDashboard: false,
   });
   const [environment, setEnvironment] = useState("");
   const [sql, setSql] = useState("");
@@ -130,7 +131,14 @@ export function SqlConsole() {
     <div className="flex min-h-screen flex-col">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3">
         <div>
-          <h1 className="text-base font-semibold tracking-tight">SQL Tool</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-base font-semibold tracking-tight">SQL Tool</h1>
+            {catalog.logDashboard ? (
+              <a href="/logs" className="text-sm text-accent hover:underline">
+                Logs
+              </a>
+            ) : null}
+          </div>
           <p className="text-xs text-muted">Read-only queries against configured databases</p>
         </div>
         <EnvironmentSelector
