@@ -57,7 +57,4 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           port: 22
           capture_stdout: true
-          script: |
-            echo SSH_COMMAND_EXECUTED
-            whoami
-            echo "SSH_COMMAND_EXECUTED"
+          script: echo START_TEST && whoami && hostname && echo END_TEST
