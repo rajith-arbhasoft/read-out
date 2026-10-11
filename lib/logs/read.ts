@@ -213,7 +213,7 @@ export async function readErrorGroups(
 export async function readImports(environment: string): Promise<LogImport[]> {
   const rows = await queryReadOnly(
     environment,
-    `SELECT file_name, status, offset, last_processed_at, created_at
+    `SELECT file_name, status, "offset", last_processed_at, created_at
      FROM log.log_trackers
      ORDER BY last_processed_at DESC NULLS LAST, created_at DESC
      LIMIT 50`,

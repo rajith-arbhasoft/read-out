@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 1234",
     "build": "next build",
-    "start": "next start",
+    "start": "next start ",
     "test": "tsx --test tests/validator.test.ts tests/config.test.ts tests/store.test.ts tests/logs-query.test.ts"
   },
   "dependencies": {
