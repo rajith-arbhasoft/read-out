@@ -57,25 +57,36 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           port: 22
           script: |
-            cd /d E:\internal-tool\read-out
-            if errorlevel 1 exit /b 1
-            
-            echo Checking directory...
+            echo Checking current directory
             cd
 
-            echo Checking Git...
+            echo Checking E drive
+            E:
+
+            echo Changing project directory
+            cd \internal-tool\read-out
+            if errorlevel 1 exit /b 1
+
+            echo Checking Git repository
+            git rev-parse --show-toplevel
+            if errorlevel 1 exit /b 1
+
+            echo Checking current branch
+            git branch --show-current
+
+            echo Checking remote
+            git remote -v
+
+            echo Checking working tree
             git status
 
-            echo Pulling latest code...
+            echo Fetching main
+            git fetch origin main
+            if errorlevel 1 exit /b 1
+
+            echo Pulling main
             git pull origin main
             if errorlevel 1 exit /b 1
 
-            echo Installing dependencies...
-            npm ci
-            if errorlevel 1 exit /b 1
-
-            echo Building application...
-            npm run build
-            if errorlevel 1 exit /b 1
-
-            echo Deployment commands completed.
+            echo Latest commit
+            git log -1 --oneline
