@@ -32,7 +32,7 @@ jobs:
               "set-routes = 1" \
               "set-dns = 0" \
               > /tmp/openfortivpn.conf
-              
+
               sudo chmod 600 /tmp/openfortivpn.conf
 
       - name: Connect to VPN
@@ -47,7 +47,6 @@ jobs:
       - name: Test VPN Connection
         run: |
           sleep 10
-          ping -c 4 ${{ secrets.SERVER_HOST }}
           nc -zv ${{ secrets.SERVER_HOST }} 22
           
       - name: Deploy
