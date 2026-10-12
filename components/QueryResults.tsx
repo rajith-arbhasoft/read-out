@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { QueryResult } from "@/lib/types";
 
 type QueryResultsProps = {
@@ -10,11 +10,56 @@ type QueryResultsProps = {
 };
 
 export function QueryResults({ result, error, executing }: QueryResultsProps) {
+  const panelRef = useRef<HTMLElement>(null);
   const [selected, setSelected] = useState<{ column: string; text: string } | null>(null);
+  const [fullScreen, setFullScreen] = useState(false);
+  const hasTable = Boolean(result && result.columns.length > 0 && result.rowCount > 0);
+
+  useEffect(() => {
+    function onChange() {
+      setFullScreen(document.fullscreenElement === panelRef.current);
+    }
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
+
+  useEffect(() => {
+    if (!fullScreen) return;
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape" && document.fullscreenElement !== panelRef.current) {
+        setFullScreen(false);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [fullScreen]);
+
+  async function toggleFullScreen() {
+    const panel = panelRef.current;
+    if (!panel) return;
+    if (document.fullscreenElement === panel) {
+      await document.exitFullscreen();
+      return;
+    }
+    if (fullScreen) {
+      setFullScreen(false);
+      return;
+    }
+    try {
+      await panel.requestFullscreen();
+    } catch {
+      setFullScreen(true);
+    }
+  }
 
   return (
-    <section className="flex min-h-0 flex-1 flex-col gap-3" aria-live="polite">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
+    <section
+      ref={panelRef}
+      className={`flex min-h-0 flex-1 flex-col gap-3 ${fullScreen ? "fixed inset-0 z-40 bg-canvas p-4" : ""}`}
+      aria-live="polite"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm text-muted">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
         {executing ? <span>Running query…</span> : null}
         {result ? (
           <>
@@ -28,6 +73,16 @@ export function QueryResults({ result, error, executing }: QueryResultsProps) {
               Environment: <strong className="font-medium text-ink">{result.environment}</strong>
             </span>
           </>
+        ) : null}
+        </div>
+        {hasTable ? (
+          <button
+            type="button"
+            className="rounded-md border border-line px-3 py-1.5 text-sm text-ink hover:bg-panel-2"
+            onClick={() => void toggleFullScreen()}
+          >
+            {fullScreen ? "Exit full screen" : "Full screen"}
+          </button>
         ) : null}
       </div>
 
@@ -44,7 +99,7 @@ export function QueryResults({ result, error, executing }: QueryResultsProps) {
       ) : null}
 
       {result && result.columns.length > 0 && result.rowCount > 0 ? (
-        <div className="max-h-[32rem] overflow-auto rounded-md border border-line">
+        <div className={`overflow-auto rounded-md border border-line ${fullScreen ? "min-h-0 flex-1" : "max-h-[32rem]"}`}>
           <table className="min-w-full border-collapse text-left text-sm">
             <thead className="sticky top-0 z-10 bg-panel-2">
               <tr>
@@ -81,7 +136,7 @@ export function QueryResults({ result, error, executing }: QueryResultsProps) {
       ) : null}
 
       {selected ? (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4" role="presentation">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="presentation">
           <div
             role="dialog"
             aria-modal="true"
