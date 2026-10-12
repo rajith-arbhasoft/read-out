@@ -6,7 +6,7 @@
     "dev": "next dev -p 1234",
     "build": "next build",
     "start": "next start ",
-    "test": "tsx --test tests/validator.test.ts tests/config.test.ts tests/store.test.ts tests/logs-query.test.ts"
+    "test": "tsx --test tests/validator.test.ts tests/config.test.ts tests/store.test.ts tests/logs-query.test.ts tests/csv.test.ts"
   },
   "dependencies": {
     "@codemirror/lang-sql": "^6.9.0",

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { csvFileName, toCsv } from "@/lib/csv";
 import type { QueryResult } from "@/lib/types";
 
 type QueryResultsProps = {
@@ -75,14 +76,23 @@ export function QueryResults({ result, error, executing }: QueryResultsProps) {
           </>
         ) : null}
         </div>
-        {hasTable ? (
-          <button
-            type="button"
-            className="rounded-md border border-line px-3 py-1.5 text-sm text-ink hover:bg-panel-2"
-            onClick={() => void toggleFullScreen()}
-          >
-            {fullScreen ? "Exit full screen" : "Full screen"}
-          </button>
+        {hasTable && result ? (
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className="rounded-md border border-line px-3 py-1.5 text-sm text-ink hover:bg-panel-2"
+              onClick={() => downloadCsv(result)}
+            >
+              Export CSV
+            </button>
+            <button
+              type="button"
+              className="rounded-md border border-line px-3 py-1.5 text-sm text-ink hover:bg-panel-2"
+              onClick={() => void toggleFullScreen()}
+            >
+              {fullScreen ? "Exit full screen" : "Full screen"}
+            </button>
+          </div>
         ) : null}
       </div>
 
@@ -159,6 +169,17 @@ export function QueryResults({ result, error, executing }: QueryResultsProps) {
       ) : null}
     </section>
   );
+}
+
+function downloadCsv(result: QueryResult) {
+  const csv = toCsv(result.columns, result.rows);
+  const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = csvFileName(result.environment);
+  link.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function formatDuration(durationMs: number): string {
