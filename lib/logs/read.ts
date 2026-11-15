@@ -124,7 +124,7 @@ export async function readTimeseries(
        COUNT(*) FILTER (WHERE level >= 50)::int AS error,
        COUNT(*) FILTER (WHERE level = 60)::int AS fatal
      FROM log.logs
-     WHERE ${where.sql}
+     WHERE ${where.sql ?`${where.sql} AND`:``} leve <> 35
      GROUP BY 1
      ORDER BY 1`,
     [...where.params, bucket],
