@@ -11,6 +11,7 @@ import type {
   LogListItem,
   LogPoint,
   LogSummary,
+  ServerKpis,
   SlowGroup,
 } from "@/lib/logs/types";
 import type { EnvironmentCatalog } from "@/lib/types";
@@ -64,6 +65,7 @@ export function LogDashboard() {
   const [minMs, setMinMs] = useState("1000");
   const [page, setPage] = useState(1);
   const [summary, setSummary] = useState<LogSummary | null>(null);
+  const [serverKpis, setServerKpis] = useState<ServerKpis | null>(null);
   const [points, setPoints] = useState<LogPoint[]>([]);
   const [resolvedBucket, setResolvedBucket] = useState<LogBucket>("hour");
   const [list, setList] = useState<LogList | null>(null);
@@ -127,13 +129,15 @@ export function LogDashboard() {
       getData<LogSummary>("/api/logs/summary", sharedSearch(environment, from, to, filters)),
       getData<{ bucket: LogBucket; points: LogPoint[] }>("/api/logs/timeseries", search),
       getData<{ items: ErrorGroup[] }>("/api/logs/groups/errors", sharedSearch(environment, from, to, filters)),
+      getData<ServerKpis>("/api/logs/server-kpis", new URLSearchParams({ environment, from, to })),
     ])
-      .then(([nextSummary, series, nextErrors]) => {
+      .then(([nextSummary, series, nextErrors, nextServerKpis]) => {
         if (cancelled) return;
         setSummary(nextSummary);
         setPoints(series.points);
         setResolvedBucket(series.bucket);
         setErrors(nextErrors.items);
+        setServerKpis(nextServerKpis);
       })
       .catch((reason: unknown) => {
         if (!cancelled) setError(reason instanceof Error ? reason.message : "Logs could not be loaded.");
@@ -393,6 +397,48 @@ export function LogDashboard() {
           <Card label="Error rate" value={summary ? formatRate(summary.errorRate) : "—"} />
           <Card label="p95" value={summary ? formatMs(summary.p95ResponseTimeMs) : "—"} />
         </section>
+
+        {serverKpis ? (
+          <section className="grid gap-3 lg:grid-cols-2">
+            <article className="rounded-md border border-line bg-panel p-3">
+              <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+                <h2 className="text-sm font-medium">Node memory</h2>
+                <p className="text-xs text-muted">
+                  Latest level 35 snapshot
+                  {serverKpis.memory.at ? ` · ${formatTime(serverKpis.memory.at)}` : " · No sample in range"}
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                <Card label="RSS" value={formatMb(serverKpis.memory.rssMb)} />
+                <Card label="Heap used" value={formatMb(serverKpis.memory.heapUsedMb)} />
+                <Card label="Heap total" value={formatMb(serverKpis.memory.heapTotalMb)} />
+                <Card label="External" value={formatMb(serverKpis.memory.externalMb)} />
+              </div>
+            </article>
+            <article className="rounded-md border border-line bg-panel p-3">
+              <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+                <h2 className="text-sm font-medium">Node performance</h2>
+                <p className="text-xs text-muted">
+                  Latest level 35 snapshot
+                  {serverKpis.performance.at
+                    ? ` · ${formatTime(serverKpis.performance.at)}`
+                    : " · No sample in range"}
+                </p>
+              </div>
+              {Object.keys(serverKpis.performance.metrics).length > 0 ? (
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+                  {Object.entries(serverKpis.performance.metrics)
+                    .sort(([a], [b]) => a.localeCompare(b))
+                    .map(([key, value]) => (
+                      <Card key={key} label={formatMetricLabel(key)} value={formatMetricValue(key, value)} />
+                    ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted">No server-performance log in the selected time range.</p>
+              )}
+            </article>
+          </section>
+        ) : null}
 
         {summary ? (
           <p className="text-xs text-muted">
@@ -871,6 +917,25 @@ function formatBucket(iso: string, bucket: LogBucket): string {
 
 function formatMs(value: number): string {
   return `${value.toLocaleString()} ms`;
+}
+
+function formatMb(value: number | null): string {
+  if (value == null) return "—";
+  return `${value.toLocaleString(undefined, { maximumFractionDigits: 2 })} MB`;
+}
+
+function formatMetricLabel(key: string): string {
+  return key
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function formatMetricValue(key: string, value: number): string {
+  const lower = key.toLowerCase();
+  if (lower.includes("ms") || lower.endsWith("lag")) return `${value.toLocaleString()} ms`;
+  if (lower.includes("sec") || lower === "uptime") return `${value.toLocaleString()} s`;
+  return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
 function formatRate(rate: number): string {

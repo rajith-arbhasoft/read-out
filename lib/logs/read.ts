@@ -1,4 +1,5 @@
 import { queryReadOnly } from "@/lib/sql/executor";
+import { parseServerMemoryMessage, parseServerPerformanceMessage } from "@/lib/logs/parse-server-metrics";
 import { fillBuckets } from "@/lib/logs/series";
 import { levelName, likePattern, parseBucket, parseGroupLimit, parseMinMs, parsePage } from "@/lib/logs/query";
 import type {
@@ -9,12 +10,64 @@ import type {
   LogPoint,
   LogSummary,
   ParsedLogQuery,
+  ServerKpis,
   SlowGroup,
 } from "@/lib/logs/types";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+/** Custom pino level used for periodic Node metric lines. */
+const METRIC_LOG_LEVEL = 35;
 
 type Where = { sql: string; params: unknown[] };
+
+export async function readServerKpis(environment: string, query: ParsedLogQuery): Promise<ServerKpis> {
+  const where = timeOnlyWhere(query);
+  const [memoryRow, performanceRow] = await Promise.all([
+    queryReadOnly(
+      environment,
+      `SELECT timestamp, message
+       FROM log.logs
+       WHERE ${where.sql}
+         AND level = ${METRIC_LOG_LEVEL}
+         AND message ILIKE '%server-memory%'
+       ORDER BY timestamp DESC, id DESC
+       LIMIT 1`,
+      where.params,
+    ).then((rows) => rows[0]),
+    queryReadOnly(
+      environment,
+      `SELECT timestamp, message
+       FROM log.logs
+       WHERE ${where.sql}
+         AND level = ${METRIC_LOG_LEVEL}
+         AND message ILIKE '%server-performance%'
+       ORDER BY timestamp DESC, id DESC
+       LIMIT 1`,
+      where.params,
+    ).then((rows) => rows[0]),
+  ]);
+
+  const memoryParsed =
+    memoryRow?.message != null ? parseServerMemoryMessage(String(memoryRow.message)) : null;
+  const performanceParsed =
+    performanceRow?.message != null ? parseServerPerformanceMessage(String(performanceRow.message)) : null;
+
+  return {
+    from: query.from.toISOString(),
+    to: query.to.toISOString(),
+    memory: {
+      at: memoryRow?.timestamp == null ? null : asDate(memoryRow.timestamp).toISOString(),
+      rssMb: memoryParsed?.rssMb ?? null,
+      heapTotalMb: memoryParsed?.heapTotalMb ?? null,
+      heapUsedMb: memoryParsed?.heapUsedMb ?? null,
+      externalMb: memoryParsed?.externalMb ?? null,
+    },
+    performance: {
+      at: performanceRow?.timestamp == null ? null : asDate(performanceRow.timestamp).toISOString(),
+      metrics: performanceParsed ?? {},
+    },
+  };
+}
 
 export async function readSummary(environment: string, query: ParsedLogQuery): Promise<LogSummary> {
   const where = sharedWhere(query);
@@ -227,6 +280,10 @@ export async function readImports(environment: string): Promise<LogImport[]> {
   }));
 }
 
+function timeOnlyWhere(query: ParsedLogQuery): Where {
+  return { sql: "timestamp >= $1 AND timestamp < $2", params: [query.from, query.to] };
+}
+
 function sharedWhere(query: ParsedLogQuery): Where {
   const params: unknown[] = [query.from, query.to];
   const clauses = ["timestamp >= $1", "timestamp < $2"];
@@ -254,6 +311,10 @@ function sharedWhere(query: ParsedLogQuery): Where {
     params.push(likePattern(query.message, "contains"));
     clauses.push(`message ILIKE $${params.length} ESCAPE '\\'`);
   }
+
+  clauses.push(
+    `NOT (level = ${METRIC_LOG_LEVEL} AND (message ILIKE '%server-memory%' OR message ILIKE '%server-performance%'))`,
+  );
 
   return { sql: clauses.join(" AND "), params };
 }

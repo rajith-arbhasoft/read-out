@@ -14,6 +14,26 @@ export type LogQuery = {
   q?: string;
 };
 
+export type ServerMemoryKpi = {
+  at: string | null;
+  rssMb: number | null;
+  heapTotalMb: number | null;
+  heapUsedMb: number | null;
+  externalMb: number | null;
+};
+
+export type ServerPerformanceKpi = {
+  at: string | null;
+  metrics: Record<string, number>;
+};
+
+export type ServerKpis = {
+  from: string;
+  to: string;
+  memory: ServerMemoryKpi;
+  performance: ServerPerformanceKpi;
+};
+
 export type LogSummary = {
   from: string;
   to: string;
